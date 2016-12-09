@@ -3,7 +3,7 @@ import React from 'react';
 import { ListGroup, ListGroupItem } from 'react-bootstrap';
 import io from 'socket.io-client';
 
-const socket = io.connect('/');
+const socket = io.connect('https://gj-stock-tracker.herokuapp.com/');
 
 
 export default class IndexPage extends React.Component {
