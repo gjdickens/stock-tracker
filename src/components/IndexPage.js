@@ -3,7 +3,7 @@ import React from 'react';
 import { ListGroup, ListGroupItem } from 'react-bootstrap';
 import io from 'socket.io-client';
 
-const socket = io.connect('localhost:3000');
+const socket = io.connect('/');
 
 
 export default class IndexPage extends React.Component {
