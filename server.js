@@ -60,62 +60,81 @@ conn.once('open', function() {
 
 //Web Socket
 
-var quoteData = [{ticker: "C", data: {} }, {ticker: "GS", data: {} }];
-var url = 'https://www.quandl.com/api/v3/datasets/WIKI/'
-var params = '.json?api_key=';
+var tickers = ["C", "GS"];
+var url = 'https://www.quandl.com/api/v3/datatables/WIKI/PRICES.json?ticker='
+var params = 'qopts.columns=ticker,date,close&api_key=';
 
 
 io.on('connection', function(socket) {
-		var counter = quoteData.length;
-		quoteData.map(function(arr, i) {
-			if (Object.keys(quoteData[i].data).length === 0 && quoteData[i].data.constructor === Object) {
-				var query = url + arr.ticker + params + process.env.QUANDL_KEY;
-				https.get(query, function (apiRes) {
-					var body = '';
-					apiRes.on('data', function (d) {
-						body += d;
-					});
-					apiRes.on('end', function (d) {
-						var parsed = JSON.parse(body);
-						quoteData[i].data = parsed.dataset;
-						counter --;
-						console.log(counter);
-						if (counter === 0) {
+		var tickerQuery = tickers.join();
+		if(tickerQuery.length > 0) {
+			var dateToday = new Date();
+			var fiveYearsAgo = new Date();
+			fiveYearsAgo.setFullYear(fiveYearsAgo.getFullYear()-5);
+			var dateTodayString = dateToday.toISOString().substring(0, 10);
+			var fiveYearsAgoString = fiveYearsAgo.toISOString().substring(0, 10);
+			dateTodayString = dateTodayString.replace(/-/g, '');
+			fiveYearsAgoString = fiveYearsAgoString.replace(/-/g, '');
+			var dateQuery = '&date.gte='+ fiveYearsAgoString + '&date.lt=' + dateTodayString + '&';
+			var query = url + tickerQuery + dateQuery + params + process.env.QUANDL_KEY;
+					https.get(query, function (apiRes) {
+						var body = '';
+						apiRes.on('data', function (d) {
+							body += d;
+						});
+						apiRes.on('end', function (d) {
+							var parsed = JSON.parse(body);
+							var data = parsed.datatable.data;
+							var quoteData = tickers.map(function(arr, i) {
+								var priceData = data.filter(function(x) {
+									return x[0] === arr;
+								});
+								var finalPriceData = priceData.map(function(y, j) {
+									return {ticker: y[0], date: y[1], close: y[2]};
+								});
+								return finalPriceData;
+							});
 							socket.emit('quoteData', quoteData);
-						}
+						});
 					});
-				});
 			}
 			else {
-				counter --;
-				if (counter === 0) {
-					socket.emit('quoteData', quoteData);
-				}
+				socket.emit('quoteData', []);
 			}
-		});
+
 
 		socket.on('newQuote', function (data) {
-			var query = url + data + params + process.env.QUANDL_KEY;
-			https.get(query, function (apiRes) {
+			var newQuery = url + data + dateQuery + params + process.env.QUANDL_KEY;
+			https.get(newQuery, function (apiRes) {
 				var body = '';
 				apiRes.on('data', function (d) {
 					body += d;
 				});
 				apiRes.on('end', function (d) {
 					var parsed = JSON.parse(body);
-					quoteData = quoteData.concat([ {ticker: data, data: parsed.dataset } ]);
-					socket.emit('quoteData', quoteData);
-				});
-	  	});
+					var priceData = parsed.datatable.data;
+					if(priceData.length > 0) {
+						var finalPriceData = priceData.map(function(y, j) {
+							return {ticker: y[0], date: y[1], close: y[2]};
+						});
+						tickers = tickers.concat([data]);
+						io.sockets.emit('newQuoteData', finalPriceData);
+					}
+					else {
+						socket.emit('invalidQuote', "invalid ticker");
+					}
+
+	  		});
+			});
 		});
 
 		socket.on('removeQuote', function (data) {
-			quoteData = quoteData.filter(function(arr) {
-				return arr.ticker !== data;
+			tickers = tickers.filter(function(arr) {
+				return arr !== data;
 			});
-			socket.emit('quoteData', quoteData);
-			});
+			io.sockets.emit('removeQuoteData', data);
 		});
+	});
 
 app.get('*', middleware);
 
