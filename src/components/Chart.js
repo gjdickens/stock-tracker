@@ -1,7 +1,5 @@
 import React, { Component } from 'react';
-import ReactDOM, {findDOMNode} from 'react-dom'
-
-import ReactTooltip from 'react-tooltip'
+import ReactDOM, {findDOMNode} from 'react-dom';
 
 var d3 = require('d3');
 
