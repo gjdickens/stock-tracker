@@ -29,7 +29,8 @@ export default (req, res) => {
 								<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 							</header>
 							<body>
-								<div id='app'></div>
+								<div id='app'>
+								</div>
 								<script src='bundle.js'></script>
 							</body>
 						</html>

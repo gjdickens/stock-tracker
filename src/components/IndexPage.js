@@ -6,8 +6,8 @@ import Chart from './Chart.js';
 import d3 from 'd3';
 if(process.env.WEBPACK) require('./IndexPage.scss');
 
-//const socket = io.connect('https://gj-stock-tracker.herokuapp.com/');
-const socket = io.connect('localhost:3000');
+const socket = io.connect('https://gj-stock-tracker.herokuapp.com/');
+//const socket = io.connect('localhost:3000');
 
 export default class IndexPage extends React.Component {
   constructor(props) {
@@ -127,6 +127,7 @@ export default class IndexPage extends React.Component {
 
         <footer className="col-xs-12">
           <p className="text-center">Powered by Quandl</p>
+
         </footer>
       </div>
     );

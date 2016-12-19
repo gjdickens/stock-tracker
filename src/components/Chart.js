@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
-//import Histogram from './Histogram';
+import ReactDOM, {findDOMNode} from 'react-dom'
+
+import ReactTooltip from 'react-tooltip'
+
 var d3 = require('d3');
 
 export default ({rawData, tickers, width, height}) => {
@@ -44,18 +46,12 @@ export default ({rawData, tickers, width, height}) => {
 }
 
 
+
 class Line extends React.Component {
   constructor() {
     super();
 
   }
-
-  componentDidMount() {
-    let node = d3.select(ReactDOM.findDOMNode(this));
-    console.log(node);
-
-    }
-
   render() {
     let { path, stroke, fill, strokeWidth } = this.props;
     return (
@@ -87,16 +83,39 @@ Line.propTypes = {
 
 
 
+
+
+
+
 //TO DO: need circles for each point along path
 
 class DataSeries extends React.Component {
   constructor() {
     super();
 
+    this.handleMouseOver = this.handleMouseOver.bind(this);
+    this.handleMouseOut = this.handleMouseOut.bind(this);
+    this.displayText = this.displayText.bind(this);
+
+  }
+
+  handleMouseOver(e) {
+    e.target.parentNode.style.opacity = 0.9;
+
+  }
+
+  handleMouseOut(e) {
+    e.target.parentNode.style.opacity = 0.0;
+  }
+
+  displayText(e) {
+    console.log(this);
+    console.log(e);
+    return 'middle';
   }
 
   render() {
-    let { data, colors, xScale, yScale, interpolationType, marginSide, marginTop } = this.props;
+    let { data, colors, xScale, yScale, interpolationType, marginSide, marginTop, width } = this.props;
 
     let line = d3.line()
       .x((d) => {
@@ -118,11 +137,46 @@ class DataSeries extends React.Component {
       );
     });
 
+    let renderCircles = (series, id) => {
+      var that = this;
+      return series.map(function(point, i) {
+        let xDate = d3.timeParse("%Y-%m-%d")(point.date);
+        let xPoint = xScale(xDate);
+        let yPoint = yScale(point.close);
+        return (
+          <g style={{opacity: 0}}>
+          <circle
+            cx = {xPoint}
+            cy = {yPoint}
+            r = {5}
+            key = {i}
+            fillOpacity={'0.9'}
+            id={point.ticker + ',' + point.close}
+            onMouseOver={that.handleMouseOver}
+            onMouseOut={that.handleMouseOut}
+         />
+         <text
+         x = {xPoint > (width/1.2) ? xPoint - (width/15) : xPoint }
+         y = {yPoint - 10}
+         >{point.ticker}: {point.close}</text>
+         </g>
+        )
+      });
+    };
+
+    let labels = data.points.map((series, id) => {
+      return <g>{ renderCircles(series, id) }</g>
+    });
+
+
     return (
       <g>
+          <g
+            transform={'translate(' + marginSide + ',' + marginTop + ')'}
+            >{lines}</g>
         <g
           transform={'translate(' + marginSide + ',' + marginTop + ')'}
-          >{lines}</g>
+          >{labels}</g>
       </g>
     );
   }

@@ -8,10 +8,8 @@ import socket from 'socket.io';
 
 import https from 'https';
 import BodyParser from 'body-parser';
-import Mongoose from 'mongoose';
 
 
-//var QUANDL_KEY = 'xiuCVEu_J9xapgUViBbn';
 
 const app = express();
 const server = http.Server(app);
@@ -44,18 +42,6 @@ else if(process.env.NODE_ENV === 'production') {
 
 var port = process.env.PORT || 3000;
 
-
-//configure MongoDB
-const db = process.env.MONGOLAB_URI;
-
-Mongoose.connect(db);
-
-const conn = Mongoose.connection;
-
-conn.on('error', console.error.bind(console, 'connection error:'));
-conn.once('open', function() {
-  console.log('database connected');
-});
 
 
 //Web Socket
